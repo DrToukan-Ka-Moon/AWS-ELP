@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>TomTom Map with Route</title>
+    <link rel='stylesheet' type='text/css' href='https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.13.0/maps/maps.css'>
+    <script src="https://api.tomtom.com/maps-sdk-for-web/cdn/6.x/6.13.0/maps/maps-web.min.js"></script>
+    <style>
+        #map {
+            height: 1080px;
+            width: 1920px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Amazon ELP</h1>
+    <div id="map"></div>
+    <script type="text/javascript">
+        var cafe1 = [-0.0798826, 51.5120340]
+
+        var map = tt.map({
+            key: 'J7HHqWNtQ2EekR8LDwOZ8nMUtZ3T8qGA',
+            container: 'map',
+            //center: [-0.1276, 51.5072], // Longitude, Latitude of London
+            center: cafe1,
+            zoom: 15
+        });
+        map.invalidateSize();
+
+        // Function to draw a route on the map
+        function drawRoute(geometry) {
+            map.addLayer({
+                id: 'route',
+                type: 'line',
+                source: {
+                    type: 'geojson',
+                    data: {
+                        type: 'Feature',
+                        properties: {},
+                        geometry: geometry
+                    }
+                },
+                paint: {
+                    'line-color': '#4a90e2',
+                    'line-width': 6
+                }
+            });
+        }
+
+        // Function to calculate and display the route
+        function calculateRoute(locations) {
+            var batchQuery = locations.map(function(loc, i) {
+                return {
+                    query: `/routing/1/calculateRoute/${loc.departure}/${loc.arrival}/json`,
+                    body: {
+                        points: loc.points
+                    }
+                };
+            });
+
+            tt.services.calculateRoute({
+                key: 'YOUR_TOMTOM_API_KEY',
+                locations: batchQuery
+            }).go()
+            .then(function(routes) {
+                var route = routes.routes[0].legs[0]; // Assuming one route
+                drawRoute(route.geometry);
+            });
+        }
+        
+
+        // You must replace the dummy coordinates with real ones
+        var locations = [
+            {
+                departure: [-0.0075452439190678, 51.5199535903059],
+                arrival: [-0.0798826, 51.5120340],
+                points: []
+            },
+            // ...add other waypoints similarly
+        ];
+
+        // Calculate and show the route
+        calculateRoute(locations);
+        
+        map.on('load', () => {
+            map.removeAnnotations();
+            new tt.Marker().setLngLat(cafe1).setText("Cafe Nero").addTo(map);
+        })
+    </script>
+</body>
+</html>
